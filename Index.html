@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>炫彩多进制转换器 · 可折叠版</title>
+    <style>
+        :root {
+            --bg: #f0f2f8;
+            --card: rgba(255,255,255,0.92);
+            --primary: #6c5ce7;
+            --primary-light: #eceaff;
+            --primary-glow: rgba(108, 92, 231, 0.3);
+            --accent: #00cec9;
+            --accent-light: #e0fdfc;
+            --accent-glow: rgba(0, 206, 201, 0.3);
+            --text: #2d2d3f;
+            --text-secondary: #5f5f7a;
+            --text-muted: #8b8daa;
+            --border: #e0e3f0;
+            --shadow: 0 8px 30px rgba(0,0,0,0.06);
+            --radius-sm: 12px;
+            --radius: 16px;
+            --radius-lg: 22px;
+            --transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(145deg, #e9ecf5 0%, #f4f6fc 50%, #f0f3fa 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            position: relative;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(108, 92, 231, 0.06) 0%, transparent 70%);
+            top: -200px;
+            left: -100px;
+            z-index: 0;
+            border-radius: 50%;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0, 206, 201, 0.06) 0%, transparent 70%);
+            bottom: -150px;
+            right: -120px;
+            z-index: 0;
+            border-radius: 50%;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 900px;
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow), 0 0 0 1px rgba(255,255,255,0.6);
+            padding: 28px 32px;
+            border: 1px solid rgba(255,255,255,0.8);
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .header .icon-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #eceaff, #d5d0ff);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 10px;
+            box-shadow: 0 8px 20px rgba(108, 92, 231, 0.2);
+        }
+        .header h1 {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #6c5ce7 0%, #00cec9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0 0 6px 0;
+        }
+        .header .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
+
+        .converter-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-bottom: 16px;
+        }
+
+        .panel {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            border: 1.5px solid var(--border);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary), var(--accent));
+            border-radius: 0 0 4px 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .panel.source-panel::before {
+            background: linear-gradient(180deg, #6c5ce7, #a78bfa);
+        }
+        .panel.target-panel::before {
+            background: linear-gradient(180deg, #00cec9, #55efc4);
+        }
+        .panel:hover {
+            border-color: #cdd2e8;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        }
+        .panel:hover::before {
+            opacity: 1;
+        }
+
+        .row-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .panel-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-source {
+            background: var(--primary);
+            box-shadow: 0 0 8px var(--primary-glow);
+        }
+        .dot-target {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            background: #f9f9fd;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 36px 10px 14px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+            transition: all var(--transition);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235f5f7a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            min-width: 110px;
+            font-family: inherit;
+            flex-shrink: 0;
+        }
+        select:hover {
+            border-color: #b8bfd8;
+            background-color: #f3f4fd;
+        }
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+            background: #fff;
+        }
+
+        .input-field {
+            flex: 1 1 0;
+            position: relative;
+            min-width: 0;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            font-family: var(--font-mono);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: #fafafd;
+            color: var(--text);
+            transition: all var(--transition);
+            letter-spacing: 0.02em;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
+            background: #fff;
+        }
+        input[type="text"].invalid {
+            border-color: #e17055;
+            background: #fff5f3;
+        }
+        input[type="text"].valid-input {
+            border-color: var(--accent);
+            background: #f6fdfc;
+        }
+
+        .hint {
+            font-size: 0.72rem;
+            margin-top: 3px;
+            min-height: 18px;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .hint.error {
+            color: #e17055;
+        }
+        .hint.success {
+            color: var(--accent);
+        }
+
+        .swap-inline {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+        .swap-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #ffffff, #f6f5ff);
+            border: 2px solid #dcd6f0;
+            cursor: pointer;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            color: #6c5ce7;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.12);
+        }
+        .swap-btn:hover {
+            background: linear-gradient(135deg, #eceaff, #ddd6ff);
+            border-color: #b8a9f0;
+            transform: rotate(180deg) scale(1.06);
+            box-shadow: 0 6px 18px rgba(108, 92, 231, 0.25);
+        }
+        .swap-btn:active {
+            transform: rotate(180deg) scale(0.94);
+        }
+        .swap-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+        }
+        .swap-icon span {
+            font-size: 0.85rem;
+            line-height: 1;
+        }
+
+        /* 排除内嵌区域 */
+        .exclude-inline {
+            margin-top: 12px;
+            padding: 12px 14px;
+            background: #f9f9fd;
+            border-radius: var(--radius-sm);
+            border: 1px dashed #d2d6e8;
+            animation: fadeSlide 0.3s ease;
+            position: relative;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .exclude-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .badge-source {
+            background: #ede7ff;
+            color: #6c5ce7;
+        }
+        .badge-target {
+            background: #dff9f8;
+            color: #00a8a5;
+        }
+        .toggle-collapse-btn {
+            margin-left: auto;
+            background: none;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 1.1rem;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: var(--text-muted);
+            transition: all var(--transition);
+            background: #ffffff;
+            border-color: #e0e3f0;
+            flex-shrink: 0;
+        }
+        .toggle-collapse-btn:hover {
+            background: #f0effa;
+            border-color: #b8bfd8;
+            color: var(--text-secondary);
+        }
+        .letter-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .letter-chip {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid #dde2ed;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            user-select: none;
+        }
+        .letter-chip:hover {
+            border-color: #b8bfd8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+        }
+        .letter-chip.excluded {
+            background: #ffe8e8;
+            border-color: #f0b0b0;
+            color: #c0392b;
+            text-decoration: line-through;
+            text-decoration-thickness: 2px;
+        }
+        .reset-btn {
+            margin-top: 10px;
+            padding: 6px 14px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all var(--transition);
+        }
+        .reset-btn:hover {
+            background: #f0effa;
+            border-color: #b8bfd8;
+        }
+
+        .result-bar {
+            background: #ffffff;
+            border: 1.5px solid #e0e5f5;
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            transition: all var(--transition);
+        }
+        .result-bar.has-result {
+            background: #f6fdfc;
+            border-color: #b2e4e2;
+            box-shadow: 0 0 16px rgba(0, 206, 201, 0.1);
+        }
+        .result-text {
+            flex: 1;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            word-break: break-all;
+            color: var(--text);
+        }
+        .result-text.placeholder {
+            color: var(--text-muted);
+            font-family: inherit;
+            font-style: italic;
+        }
+        .copy-btn {
+            flex-shrink: 0;
+            padding: 10px 18px;
+            border-radius: 30px;
+            border: 1.5px solid #dde2ed;
+            background: #ffffff;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .copy-btn:hover:not(:disabled) {
+            background: #eceaff;
+            border-color: #b8a9f0;
+            color: #6c5ce7;
+        }
+        .copy-btn.copied {
+            background: #e0fdfc;
+            border-color: #00cec9;
+            color: #00a8a5;
+        }
+        .copy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .footer-info {
+            margin-top: 16px;
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #2d2d3f;
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 999;
+            pointer-events: none;
+            transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success {
+            background: #00cec9;
+        }
+        .toast.error {
+            background: #e17055;
+        }
+
+        /* 响应式 */
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+                border-radius: var(--radius);
+            }
+            .row-top {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .swap-inline {
+                align-self: flex-end;
+            }
+            select {
+                width: 100%;
+                min-width: auto;
+            }
+            .input-field {
+                width: 100%;
+            }
+            .swap-btn {
+                width: 44px;
+                height: 44px;
+            }
+            .letter-chip {
+                width: 30px;
+                height: 30px;
+                font-size: 0.7rem;
+            }
+            .result-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .copy-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+            .header h1 {
+                font-size: 1.3rem;
+            }
+            .letter-chip {
+                width: 28px;
+                height: 28px;
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="icon-circle">🔢</div>
+        <h1>多进制转换器</h1>
+        <p class="subtitle">2 · 8 · 10 · 12 · 16 · 32 · 34 · 36 · 64 全覆盖</p>
+    </div>
+
+    <div class="converter-wrapper">
+        <!-- 源进制面板 -->
+        <div class="panel source-panel" id="sourcePanel">
+            <div class="row-top">
+                <span class="panel-label"><span class="dot dot-source"></span> 源进制</span>
+                <select id="sourceBase" aria-label="源进制">
+                    <option value="2">二进制 (2)</option>
+                    <option value="8">八进制 (8)</option>
+                    <option value="10" selected>十进制 (10)</option>
+                    <option value="12">十二进制 (12)</option>
+                    <option value="16">十六进制 (16)</option>
+                    <option value="32">三十二 (32)</option>
+                    <option value="34">三十四 (34)</option>
+                    <option value="36">三十六 (36)</option>
+                    <option value="64">六十四 (64)</option>
+                </select>
+                <div class="input-field">
+                    <input type="text" id="sourceInput" placeholder="输入数值..." aria-label="源数值">
+                    <div class="hint" id="sourceHint"></div>
+                </div>
+                <div class="swap-inline">
+                    <button class="swap-btn" id="swapBtn" title="交换源和目标进制">
+                        <span class="swap-icon">
+                            <span>▲</span>
+                            <span>▼</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <!-- 源进制自定义区域 -->
+            <div class="exclude-inline" id="excludeInlineSource12" style="display:none;" data-collapsed="false"></div>
+            <div class="exclude-inline" id="excludeInlineSource32" style="display:none;" data-collapsed="false"></div>
+            <div class="exclude-inline" id="excludeInlineSource34" style="display:none;" data-collapsed="false"></div>
+        </div>
+
+        <!-- 目标进制面板 -->
+        <div class="panel target-panel" id="targetPanel">
+            <div class="row-top">
+                <span class="panel-label"><span class="dot dot-target"></span> 目标进制</span>
+                <select id="targetBase" aria-label="目标进制">
+                    <option value="2">二进制 (2)</option>
+                    <option value="8">八进制 (8)</option>
+                    <option value="10">十进制 (10)</option>
+                    <option value="12">十二进制 (12)</option>
+                    <option value="16" selected>十六进制 (16)</option>
+                    <option value="32">三十二 (32)</option>
+                    <option value="34">三十四 (34)</option>
+                    <option value="36">三十六 (36)</option>
+                    <option value="64">六十四 (64)</option>
+                </select>
+                <div class="input-field">
+                    <input type="text" id="targetOutput" placeholder="转换结果..." readonly aria-label="结果">
+                    <div class="hint" id="targetHint"></div>
+                </div>
+            </div>
+            <!-- 目标进制自定义区域 -->
+            <div class="exclude-inline" id="excludeInlineTarget12" style="display:none;" data-collapsed="false"></div>
+            <div class="exclude-inline" id="excludeInlineTarget32" style="display:none;" data-collapsed="false"></div>
+            <div class="exclude-inline" id="excludeInlineTarget34" style="display:none;" data-collapsed="false"></div>
+        </div>
+    </div>
+
+    <!-- 结果展示条 -->
+    <div class="result-bar" id="resultBar">
+        <span class="result-text placeholder" id="resultDisplay">等待输入转换...</span>
+        <button class="copy-btn" id="copyBtn" disabled>📋 复制</button>
+    </div>
+
+    <div class="footer-info">
+        💡 支持大整数 · 12/32/34进制可自定义字符 · 点击 ▼ 折叠面板
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    (function() {
+        const sourceBaseSelect = document.getElementById('sourceBase');
+        const targetBaseSelect = document.getElementById('targetBase');
+        const sourceInput = document.getElementById('sourceInput');
+        const targetOutput = document.getElementById('targetOutput');
+        const sourceHint = document.getElementById('sourceHint');
+        const targetHint = document.getElementById('targetHint');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const resultBar = document.getElementById('resultBar');
+        const copyBtn = document.getElementById('copyBtn');
+        const swapBtn = document.getElementById('swapBtn');
+        const toast = document.getElementById('toast');
+
+        const excludeContainers = {
+            source12: document.getElementById('excludeInlineSource12'),
+            source32: document.getElementById('excludeInlineSource32'),
+            source34: document.getElementById('excludeInlineSource34'),
+            target12: document.getElementById('excludeInlineTarget12'),
+            target32: document.getElementById('excludeInlineTarget32'),
+            target34: document.getElementById('excludeInlineTarget34'),
+        };
+
+        const defaultExcluded32 = new Set(['I', 'O', 'L', 'U']);
+        let excluded32 = new Set(defaultExcluded32);
+        const defaultExcluded34 = new Set(['I', 'O']);
+        let excluded34 = new Set(defaultExcluded34);
+        const allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        const digits = '0123456789'.split('');
+        const default12Chars = new Set([...digits, 'A', 'B']);
+        let custom12Chars = new Set(default12Chars);
+
+        const BASE2 = '01'.split('');
+        const BASE8 = '01234567'.split('');
+        const BASE10 = digits;
+        const BASE16 = [...digits, ...'ABCDEF'.split('')];
+        const BASE36 = [...digits, ...allLetters];
+        const BASE64 = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), ...'abcdefghijklmnopqrstuvwxyz'.split(''), ...digits, '+', '/'];
+
+        function getCharset(base) {
+            switch (base) {
+                case 2: return BASE2;
+                case 8: return BASE8;
+                case 10: return BASE10;
+                case 12: return Array.from(custom12Chars);
+                case 16: return BASE16;
+                case 32: return [...digits, ...allLetters.filter(l => !excluded32.has(l))];
+                case 34: return [...digits, ...allLetters.filter(l => !excluded34.has(l))];
+                case 36: return BASE36;
+                case 64: return BASE64;
+                default: return BASE10;
+            }
+        }
+
+        function parseBigInt(str, charset) {
+            const map = new Map();
+            charset.forEach((ch, i) => map.set(ch, i));
+            if (charset !== BASE64) {
+                charset.forEach((ch, i) => {
+                    if (ch >= 'A' && ch <= 'Z') map.set(ch.toLowerCase(), i);
+                    if (ch >= 'a' && ch <= 'z') map.set(ch.toUpperCase(), i);
+                });
+            }
+            let val = 0n;
+            const s = str.trim();
+            if (!s) return null;
+            for (const ch of s) {
+                if (!map.has(ch)) return null;
+                val = val * BigInt(charset.length) + BigInt(map.get(ch));
+            }
+            return val;
+        }
+
+        function formatBigInt(num, charset) {
+            if (num === null || num === undefined) return '';
+            if (num === 0n) return charset[0];
+            const base = BigInt(charset.length);
+            let n = num;
+            const res = [];
+            while (n > 0n) {
+                res.push(charset[Number(n % base)]);
+                n /= base;
+            }
+            return res.reverse().join('');
+        }
+
+        function validate(str, charset) {
+            if (!str.trim()) return { valid: false, msg: '请输入数值' };
+            const valid = new Set(charset);
+            if (charset !== BASE64) {
+                charset.forEach(ch => {
+                    if (ch >= 'A' && ch <= 'Z') valid.add(ch.toLowerCase());
+                    if (ch >= 'a' && ch <= 'z') valid.add(ch.toUpperCase());
+                });
+            }
+            const invalid = [];
+            for (const ch of str.trim()) {
+                if (!valid.has(ch) && !invalid.includes(ch)) invalid.push(ch);
+            }
+            return invalid.length ? { valid: false, msg: `无效字符: ${invalid.join(' ')}` } : { valid: true };
+        }
+
+        function updateUI() {
+            const srcBase = parseInt(sourceBaseSelect.value);
+            const tgtBase = parseInt(targetBaseSelect.value);
+            const srcCharset = getCharset(srcBase);
+            const tgtCharset = getCharset(tgtBase);
+            const inputVal = sourceInput.value;
+
+            if (!inputVal.trim()) {
+                sourceHint.textContent = '';
+                sourceInput.classList.remove('invalid', 'valid-input');
+                targetOutput.value = '';
+                targetHint.textContent = '';
+                resultDisplay.textContent = '等待输入转换...';
+                resultDisplay.className = 'result-text placeholder';
+                resultBar.classList.remove('has-result');
+                copyBtn.disabled = true;
+                copyBtn.classList.remove('copied');
+                copyBtn.innerHTML = '📋 复制';
+                updateCustomPanels();
+                return;
+            }
+
+            const v = validate(inputVal, srcCharset);
+            if (!v.valid) {
+                sourceHint.textContent = '⚠ ' + v.msg;
+                sourceHint.className = 'hint error';
+                sourceInput.classList.add('invalid');
+                sourceInput.classList.remove('valid-input');
+                targetOutput.value = '';
+                targetHint.textContent = '';
+                resultDisplay.textContent = '输入无效';
+                resultDisplay.className = 'result-text placeholder';
+                resultBar.classList.remove('has-result');
+                copyBtn.disabled = true;
+                copyBtn.classList.remove('copied');
+                copyBtn.innerHTML = '📋 复制';
+                updateCustomPanels();
+                return;
+            }
+
+            sourceHint.textContent = '✓ 有效';
+            sourceHint.className = 'hint success';
+            sourceInput.classList.remove('invalid');
+            sourceInput.classList.add('valid-input');
+
+            const big = parseBigInt(inputVal, srcCharset);
+            if (big === null) {
+                sourceHint.textContent = '⚠ 解析失败';
+                sourceHint.className = 'hint error';
+                sourceInput.classList.add('invalid');
+                sourceInput.classList.remove('valid-input');
+                targetOutput.value = '';
+                resultDisplay.textContent = '解析错误';
+                resultDisplay.className = 'result-text placeholder';
+                resultBar.classList.remove('has-result');
+                copyBtn.disabled = true;
+                copyBtn.classList.remove('copied');
+                copyBtn.innerHTML = '📋 复制';
+                updateCustomPanels();
+                return;
+            }
+
+            const result = formatBigInt(big, tgtCharset);
+            targetOutput.value = result;
+            targetHint.textContent = `✓ ${srcCharset.length} → ${tgtCharset.length} 进制`;
+            targetHint.className = 'hint success';
+            resultDisplay.textContent = result;
+            resultDisplay.className = 'result-text';
+            resultBar.classList.add('has-result');
+            copyBtn.disabled = false;
+            copyBtn.classList.remove('copied');
+            copyBtn.innerHTML = '📋 复制';
+            updateCustomPanels();
+        }
+
+        // 渲染自定义面板（含折叠功能）
+        function renderCustomPanel(container, baseType, isSource) {
+            if (!container) return;
+            let title, charSet, defaultSet, maxCount;
+            if (baseType === 12) {
+                title = '12进制字符选择';
+                charSet = custom12Chars;
+                defaultSet = default12Chars;
+                maxCount = 12;
+            } else if (baseType === 32) {
+                title = '32进制字符排除';
+                charSet = excluded32;
+                defaultSet = defaultExcluded32;
+                maxCount = 4;
+            } else if (baseType === 34) {
+                title = '34进制字符排除';
+                charSet = excluded34;
+                defaultSet = defaultExcluded34;
+                maxCount = 2;
+            } else {
+                return;
+            }
+
+            const isExcludeMode = (baseType === 32 || baseType === 34);
+            const currentCount = charSet.size;
+            const targetCount = maxCount;
+            const collapsed = container.dataset.collapsed === 'true';
+
+            container.innerHTML = `
+                <div class="exclude-header">
+                    🔧 ${title}
+                    <span class="badge ${isSource ? 'badge-source' : 'badge-target'}">
+                        ${isExcludeMode ? '排除' : '已选'} <span class="count-value">${currentCount}</span> 个
+                    </span>
+                    <button class="toggle-collapse-btn" title="${collapsed ? '展开' : '折叠'}">${collapsed ? '▶' : '▼'}</button>
+                </div>
+                <div class="collapse-content" style="display: ${collapsed ? 'none' : 'block'};">
+                    <p style="font-size:0.73rem;color:#8b8daa;margin-bottom:10px;">
+                        ${isExcludeMode 
+                            ? `从 0-9 + A-Z 中排除 <strong class="target-count">${targetCount}</strong> 个字母。` 
+                            : `从 0-9 + A-Z 中选择 <strong class="target-count">${targetCount}</strong> 个字符（当前已选 ${currentCount}）。`}
+                    </p>
+                    <div class="letter-grid"></div>
+                    <button class="reset-btn">↺ 默认</button>
+                </div>
+            `;
+
+            const letterGrid = container.querySelector('.letter-grid');
+            const resetBtn = container.querySelector('.reset-btn');
+            const countSpan = container.querySelector('.count-value');
+            const targetStrong = container.querySelector('.target-count');
+            const toggleBtn = container.querySelector('.toggle-collapse-btn');
+            const collapseContent = container.querySelector('.collapse-content');
+
+            // 绑定折叠按钮
+            toggleBtn.addEventListener('click', () => {
+                const isHidden = collapseContent.style.display === 'none';
+                collapseContent.style.display = isHidden ? 'block' : 'none';
+                toggleBtn.textContent = isHidden ? '▼' : '▶';
+                toggleBtn.title = isHidden ? '折叠' : '展开';
+                container.dataset.collapsed = isHidden ? 'false' : 'true';
+            });
+
+            // 渲染字母芯片
+            allLetters.forEach(letter => {
+                const chip = document.createElement('span');
+                const isActive = isExcludeMode ? charSet.has(letter) : charSet.has(letter);
+                chip.className = 'letter-chip' + (isExcludeMode ? (charSet.has(letter) ? ' excluded' : '') : (!charSet.has(letter) ? ' excluded' : ''));
+                chip.textContent = letter;
+                chip.addEventListener('click', () => {
+                    if (isExcludeMode) {
+                        if (charSet.has(letter)) {
+                            charSet.delete(letter);
+                        } else {
+                            if (charSet.size >= maxCount) {
+                                showToast(`Base ${baseType} 需排除 ${maxCount} 个字母`, 'error');
+                                return;
+                            }
+                            charSet.add(letter);
+                        }
+                    } else {
+                        if (charSet.has(letter)) {
+                            if (charSet.size <= 1) {
+                                showToast('至少需要选择一个字母', 'error');
+                                return;
+                            }
+                            charSet.delete(letter);
+                        } else {
+                            if (charSet.size >= maxCount) {
+                                showToast(`Base 12 只能有 ${maxCount} 个字符`, 'error');
+                                return;
+                            }
+                            charSet.add(letter);
+                        }
+                    }
+                    updateCustomPanels();
+                    updateUI();
+                });
+                letterGrid.appendChild(chip);
+            });
+
+            resetBtn.addEventListener('click', () => {
+                if (baseType === 12) {
+                    custom12Chars = new Set(default12Chars);
+                } else if (baseType === 32) {
+                    excluded32 = new Set(defaultExcluded32);
+                } else if (baseType === 34) {
+                    excluded34 = new Set(defaultExcluded34);
+                }
+                updateCustomPanels();
+                updateUI();
+                showToast(`Base ${baseType} 已恢复默认`, 'success');
+            });
+
+            // 更新计数颜色
+            const updateCountColor = () => {
+                const cnt = charSet.size;
+                if (cnt === targetCount) {
+                    countSpan.style.color = '#00cec9';
+                    if (targetStrong) targetStrong.style.color = '#00cec9';
+                } else {
+                    countSpan.style.color = '#e17055';
+                    if (targetStrong) targetStrong.style.color = '#e17055';
+                }
+            };
+            updateCountColor();
+        }
+
+        function updateCustomPanels() {
+            const srcBase = parseInt(sourceBaseSelect.value);
+            const tgtBase = parseInt(targetBaseSelect.value);
+
+            Object.values(excludeContainers).forEach(el => el.style.display = 'none');
+
+            if (srcBase === 12) {
+                excludeContainers.source12.style.display = 'block';
+                renderCustomPanel(excludeContainers.source12, 12, true);
+            } else if (srcBase === 32) {
+                excludeContainers.source32.style.display = 'block';
+                renderCustomPanel(excludeContainers.source32, 32, true);
+            } else if (srcBase === 34) {
+                excludeContainers.source34.style.display = 'block';
+                renderCustomPanel(excludeContainers.source34, 34, true);
+            }
+
+            if (tgtBase === 12) {
+                excludeContainers.target12.style.display = 'block';
+                renderCustomPanel(excludeContainers.target12, 12, false);
+            } else if (tgtBase === 32) {
+                excludeContainers.target32.style.display = 'block';
+                renderCustomPanel(excludeContainers.target32, 32, false);
+            } else if (tgtBase === 34) {
+                excludeContainers.target34.style.display = 'block';
+                renderCustomPanel(excludeContainers.target34, 34, false);
+            }
+        }
+
+        let toastTimer;
+        function showToast(msg, cls = '') {
+            if (toastTimer) clearTimeout(toastTimer);
+            toast.textContent = msg;
+            toast.className = 'toast ' + cls + ' show';
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function copyResult() {
+            const text = targetOutput.value;
+            if (!text) return;
+            navigator.clipboard?.writeText(text).then(() => {
+                copyBtn.classList.add('copied');
+                copyBtn.innerHTML = '✅ 已复制';
+                showToast('已复制到剪贴板', 'success');
+                setTimeout(() => {
+                    copyBtn.classList.remove('copied');
+                    copyBtn.innerHTML = '📋 复制';
+                }, 2000);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                copyBtn.classList.add('copied');
+                copyBtn.innerHTML = '✅ 已复制';
+                showToast('已复制', 'success');
+                setTimeout(() => {
+                    copyBtn.classList.remove('copied');
+                    copyBtn.innerHTML = '📋 复制';
+                }, 2000);
+            });
+        }
+
+        function swapBases() {
+            const sVal = sourceBaseSelect.value;
+            const tVal = targetBaseSelect.value;
+            sourceBaseSelect.value = tVal;
+            targetBaseSelect.value = sVal;
+            const sInput = sourceInput.value;
+            const tOutput = targetOutput.value;
+            sourceInput.value = tOutput;
+            targetOutput.value = '';
+            updateUI();
+            showToast('已交换进制');
+        }
+
+        sourceBaseSelect.addEventListener('change', updateUI);
+        targetBaseSelect.addEventListener('change', updateUI);
+        sourceInput.addEventListener('input', updateUI);
+        swapBtn.addEventListener('click', swapBases);
+        copyBtn.addEventListener('click', copyResult);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+                e.preventDefault();
+                swapBases();
+            }
+        });
+
+        function init() {
+            updateCustomPanels();
+            sourceInput.value = '';
+            targetOutput.value = '';
+            resultDisplay.textContent = '等待输入转换...';
+            resultDisplay.className = 'result-text placeholder';
+            resultBar.classList.remove('has-result');
+            copyBtn.disabled = true;
+            sourceHint.textContent = '';
+            targetHint.textContent = '';
+        }
+        init();
+    })();
+</script>
+</body>
+</html>
